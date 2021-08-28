@@ -10,14 +10,15 @@ Put rootfs.tar.gz and config.json in current folder and:
 make
 ```
 
-To generate the config.json:
-* Create a container with `ctr c create quay.io/sysdig/secure-inline-scan:2 foo`
-* Get the spec with `ctr c info foo --spec > config.json`
-* Root filesytem can be created with:
+Root filesytem can be created with:
 ```
 docker export (docker create secure-inline-scan:2) -o rootfs.tar
 ```
-* And then compressed with gzip
+and then compressed with gzip
+
+To generate the config.json:
+ * Create a container with `ctr c create quay.io/sysdig/secure-inline-scan:2 foo`
+ * Get the spec with `ctr c info foo --spec > config.json`
 
 Caveats:
 * Requires running as root (although rootless should be possible)
