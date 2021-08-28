@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"syscall"
 
 	"github.com/docker/docker/pkg/archive"
 	"github.com/opencontainers/runc/libcontainer"
@@ -50,7 +49,6 @@ func init() {
 func main() {
 
 	logrus.Infof("Extracting...\n")
-	dockerSockPath := filepath.Join(rootFsTmp, "var", "run", "docker.sock")
 
 	// Make the rootfs directory.
 	if err := os.MkdirAll(rootFsTmp, 0755); err != nil {
@@ -59,16 +57,6 @@ func main() {
 	}
 
 	defer func() {
-		logrus.Infof("Unmounting %s...\n", dockerSockPath)
-		if err := syscall.Unmount(dockerSockPath, 0); err != nil {
-			logrus.Error(err)
-		}
-
-		logrus.Infof("Unmounting /host...\n")
-		if err := syscall.Unmount("/host", 0); err != nil {
-			logrus.Error(err)
-		}
-
 		logrus.Infof("Removing extracted files...\n")
 		// Remove the rootfs after the container has exited.
 		if err := os.RemoveAll(rootFsTmp); err != nil {
@@ -96,23 +84,6 @@ func main() {
 		return
 	}
 
-	logrus.Infof("Mounting /var/run/docker.sock at %s...\n", dockerSockPath)
-	if file, err := os.Create(dockerSockPath); err == nil {
-		file.Close()
-	}
-	if err := syscall.Mount("/var/run/docker.sock", dockerSockPath, "none", syscall.MS_BIND, ""); err != nil {
-		logrus.Error(err)
-	}
-
-	logrus.Infof("Mounting host filesystem at /host...\n")
-	// Make the rootfs directory.
-	if err := os.MkdirAll("/host", 0755); err != nil {
-		logrus.Error(err)
-	}
-	if err := syscall.Mount("/", "/host", "none", syscall.MS_BIND, ""); err != nil {
-		logrus.Error(err)
-	}
-
 	logrus.Infof("Executing...\n")
 	factory, err := libcontainer.New(stateTmp, libcontainer.RootlessCgroupfs, libcontainer.InitArgs(os.Args[0], "init"))
 	if err != nil {
@@ -133,7 +104,10 @@ func main() {
 		return
 	}
 
-	logrus.Infof("Current user: %+v\n", u)
+	uid, _ := strconv.Atoi(u.Uid)
+	gid, _ := strconv.Atoi(u.Gid)
+
+	logrus.Infof("Current user UID %d GID %d", uid, gid)
 
 	var processConfig struct {
 		Process struct {
@@ -147,11 +121,10 @@ func main() {
 		return
 	}
 
-	uid, _ := strconv.Atoi(u.Uid)
-	gid, _ := strconv.Atoi(u.Gid)
+
 	config := &configs.Config{
 		RootlessEUID:    uid != 0,
-		RootlessCgroups: uid != 0,
+		RootlessCgroups: true,
 		Rootfs:          rootFsTmp,
 		Capabilities: &configs.Capabilities{
 			Bounding: []string{
@@ -266,6 +239,18 @@ func main() {
 		Hostname: "ctrwrap",
 		Mounts: []*configs.Mount{
 			{
+				Source: "/var/run/docker.sock",
+				Destination: "/var/run/docker.sock",
+				Device: "bind",
+				Flags: unix.MS_BIND | unix.MS_REC,
+			},
+			{
+				Source: "/",
+				Destination: "/host",
+				Device: "bind",
+				Flags: unix.MS_BIND | unix.MS_REC,
+			},
+			{
 				Source:      "proc",
 				Destination: "/proc",
 				Device:      "proc",
@@ -374,5 +359,4 @@ func main() {
 		return
 	}
 
-	logrus.Infof("Exit without err\n")
 }
