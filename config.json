@@ -1,0 +1,339 @@
+{
+    "ociVersion": "1.0.2-dev",
+    "process": {
+        "user": {
+            "uid": 1000,
+            "gid": 1000
+        },
+        "args": [
+            "/sysdig-inline-scan.sh"
+        ],
+        "env": [
+            "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "container=oci",
+            "LANG=en_US.UTF-8",
+            "LC_ALL=C.UTF-8",
+            "ANCHORE_CONFIG_DIR=/config",
+            "ANCHORE_SERVICE_DIR=/anchore_service",
+            "ANCHORE_ANALYSIS_TMPDIR=/analysis_scratch",
+            "ANCHORE_LOG_LEVEL=INFO",
+            "ANCHORE_ENABLE_METRICS=false",
+            "ANCHORE_DISABLE_METRICS_AUTH=false",
+            "ANCHORE_INTERNAL_SSL_VERIFY=false",
+            "ANCHORE_WEBHOOK_DESTINATION_URL=null",
+            "ANCHORE_HINTS_ENABLED=false",
+            "ANCHORE_FEEDS_ENABLED=true",
+            "ANCHORE_FEEDS_SELECTIVE_ENABLED=true",
+            "ANCHORE_FEEDS_SSL_VERIFY=true",
+            "ANCHORE_ENDPOINT_HOSTNAME=localhost",
+            "ANCHORE_EVENTS_NOTIFICATIONS_ENABLED=false",
+            "ANCHORE_CATALOG_NOTIFICATION_INTERVAL_SEC=30",
+            "ANCHORE_FEED_SYNC_INTERVAL_SEC=21600",
+            "ANCHORE_EXTERNAL_PORT=null",
+            "ANCHORE_EXTERNAL_TLS=false",
+            "ANCHORE_AUTHZ_HANDLER=native",
+            "ANCHORE_EXTERNAL_AUTHZ_ENDPOINT=null",
+            "ANCHORE_ADMIN_PASSWORD=foobar",
+            "ANCHORE_ADMIN_EMAIL=admin@myanchore",
+            "ANCHORE_HOST_ID=anchore-quickstart",
+            "ANCHORE_DB_PORT=5432",
+            "ANCHORE_DB_NAME=postgres",
+            "ANCHORE_DB_USER=postgres",
+            "SET_HOSTID_TO_HOSTNAME=false",
+            "ANCHORE_CLI_USER=admin",
+            "ANCHORE_CLI_PASS=foobar",
+            "ANCHORE_SERVICE_PORT=8228",
+            "ANCHORE_CLI_URL=http://localhost:8228",
+            "ANCHORE_FEEDS_URL=https://ancho.re/v1/service/feeds",
+            "ANCHORE_FEEDS_CLIENT_URL=https://ancho.re/v1/account/users",
+            "ANCHORE_FEEDS_TOKEN_URL=https://ancho.re/oauth/token",
+            "ANCHORE_GLOBAL_CLIENT_READ_TIMEOUT=0",
+            "ANCHORE_GLOBAL_CLIENT_CONNECT_TIMEOUT=0",
+            "ANCHORE_AUTH_PUBKEY=null",
+            "ANCHORE_AUTH_PRIVKEY=null",
+            "ANCHORE_AUTH_SECRET=null",
+            "ANCHORE_OAUTH_ENABLED=false",
+            "ANCHORE_OAUTH_TOKEN_EXPIRATION=3600",
+            "ANCHORE_AUTH_ENABLE_HASHED_PASSWORDS=false",
+            "AUTHLIB_INSECURE_TRANSPORT=true",
+            "ANCHORE_FRESHCLAM_CONFIG_FILE=/home/anchore/clamav/freshclam.conf",
+            "ANCHORE_CLAMAV_DB_DIR=/home/anchore/clamav/db",
+            "OPENSSL_CONF=/config/openssl.cnf",
+            "OPENSSL_SECLEVEL=2"
+        ],
+        "cwd": "/anchore-engine",
+        "capabilities": {
+            "bounding": [
+                "CAP_CHOWN",
+                "CAP_DAC_OVERRIDE",
+                "CAP_FSETID",
+                "CAP_FOWNER",
+                "CAP_MKNOD",
+                "CAP_NET_RAW",
+                "CAP_SETGID",
+                "CAP_SETUID",
+                "CAP_SETFCAP",
+                "CAP_SETPCAP",
+                "CAP_NET_BIND_SERVICE",
+                "CAP_SYS_CHROOT",
+                "CAP_KILL",
+                "CAP_AUDIT_WRITE"
+            ],
+            "effective": [
+                "CAP_CHOWN",
+                "CAP_DAC_OVERRIDE",
+                "CAP_FSETID",
+                "CAP_FOWNER",
+                "CAP_MKNOD",
+                "CAP_NET_RAW",
+                "CAP_SETGID",
+                "CAP_SETUID",
+                "CAP_SETFCAP",
+                "CAP_SETPCAP",
+                "CAP_NET_BIND_SERVICE",
+                "CAP_SYS_CHROOT",
+                "CAP_KILL",
+                "CAP_AUDIT_WRITE"
+            ],
+            "inheritable": [
+                "CAP_CHOWN",
+                "CAP_DAC_OVERRIDE",
+                "CAP_FSETID",
+                "CAP_FOWNER",
+                "CAP_MKNOD",
+                "CAP_NET_RAW",
+                "CAP_SETGID",
+                "CAP_SETUID",
+                "CAP_SETFCAP",
+                "CAP_SETPCAP",
+                "CAP_NET_BIND_SERVICE",
+                "CAP_SYS_CHROOT",
+                "CAP_KILL",
+                "CAP_AUDIT_WRITE"
+            ],
+            "permitted": [
+                "CAP_CHOWN",
+                "CAP_DAC_OVERRIDE",
+                "CAP_FSETID",
+                "CAP_FOWNER",
+                "CAP_MKNOD",
+                "CAP_NET_RAW",
+                "CAP_SETGID",
+                "CAP_SETUID",
+                "CAP_SETFCAP",
+                "CAP_SETPCAP",
+                "CAP_NET_BIND_SERVICE",
+                "CAP_SYS_CHROOT",
+                "CAP_KILL",
+                "CAP_AUDIT_WRITE"
+            ]
+        },
+        "rlimits": [
+            {
+                "type": "RLIMIT_NOFILE",
+                "hard": 1024,
+                "soft": 1024
+            }
+        ],
+        "noNewPrivileges": true
+    },
+    "root": {
+        "path": "rootfs"
+    },
+    "mounts": [
+        {
+            "destination": "/proc",
+            "type": "proc",
+            "source": "proc",
+            "options": [
+                "nosuid",
+                "noexec",
+                "nodev"
+            ]
+        },
+        {
+            "destination": "/dev",
+            "type": "tmpfs",
+            "source": "tmpfs",
+            "options": [
+                "nosuid",
+                "strictatime",
+                "mode=755",
+                "size=65536k"
+            ]
+        },
+        {
+            "destination": "/dev/pts",
+            "type": "devpts",
+            "source": "devpts",
+            "options": [
+                "nosuid",
+                "noexec",
+                "newinstance",
+                "ptmxmode=0666",
+                "mode=0620",
+                "gid=5"
+            ]
+        },
+        {
+            "destination": "/dev/shm",
+            "type": "tmpfs",
+            "source": "shm",
+            "options": [
+                "nosuid",
+                "noexec",
+                "nodev",
+                "mode=1777",
+                "size=65536k"
+            ]
+        },
+        {
+            "destination": "/dev/mqueue",
+            "type": "mqueue",
+            "source": "mqueue",
+            "options": [
+                "nosuid",
+                "noexec",
+                "nodev"
+            ]
+        },
+        {
+            "destination": "/sys",
+            "type": "sysfs",
+            "source": "sysfs",
+            "options": [
+                "nosuid",
+                "noexec",
+                "nodev",
+                "ro"
+            ]
+        },
+        {
+            "destination": "/run",
+            "type": "tmpfs",
+            "source": "tmpfs",
+            "options": [
+                "nosuid",
+                "strictatime",
+                "mode=755",
+                "size=65536k"
+            ]
+        }
+    ],
+    "linux": {
+        "resources": {
+            "devices": [
+                {
+                    "allow": false,
+                    "access": "rwm"
+                },
+                {
+                    "allow": true,
+                    "type": "c",
+                    "major": 1,
+                    "minor": 3,
+                    "access": "rwm"
+                },
+                {
+                    "allow": true,
+                    "type": "c",
+                    "major": 1,
+                    "minor": 8,
+                    "access": "rwm"
+                },
+                {
+                    "allow": true,
+                    "type": "c",
+                    "major": 1,
+                    "minor": 7,
+                    "access": "rwm"
+                },
+                {
+                    "allow": true,
+                    "type": "c",
+                    "major": 5,
+                    "minor": 0,
+                    "access": "rwm"
+                },
+                {
+                    "allow": true,
+                    "type": "c",
+                    "major": 1,
+                    "minor": 5,
+                    "access": "rwm"
+                },
+                {
+                    "allow": true,
+                    "type": "c",
+                    "major": 1,
+                    "minor": 9,
+                    "access": "rwm"
+                },
+                {
+                    "allow": true,
+                    "type": "c",
+                    "major": 5,
+                    "minor": 1,
+                    "access": "rwm"
+                },
+                {
+                    "allow": true,
+                    "type": "c",
+                    "major": 136,
+                    "access": "rwm"
+                },
+                {
+                    "allow": true,
+                    "type": "c",
+                    "major": 5,
+                    "minor": 2,
+                    "access": "rwm"
+                },
+                {
+                    "allow": true,
+                    "type": "c",
+                    "major": 10,
+                    "minor": 200,
+                    "access": "rwm"
+                }
+            ]
+        },
+        "cgroupsPath": "/default/foo",
+        "namespaces": [
+            {
+                "type": "pid"
+            },
+            {
+                "type": "ipc"
+            },
+            {
+                "type": "uts"
+            },
+            {
+                "type": "mount"
+            },
+            {
+                "type": "network"
+            }
+        ],
+        "maskedPaths": [
+            "/proc/acpi",
+            "/proc/asound",
+            "/proc/kcore",
+            "/proc/keys",
+            "/proc/latency_stats",
+            "/proc/timer_list",
+            "/proc/timer_stats",
+            "/proc/sched_debug",
+            "/sys/firmware",
+            "/proc/scsi"
+        ],
+        "readonlyPaths": [
+            "/proc/bus",
+            "/proc/fs",
+            "/proc/irq",
+            "/proc/sys",
+            "/proc/sysrq-trigger"
+        ]
+    }
+}
