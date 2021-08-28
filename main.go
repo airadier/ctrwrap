@@ -9,6 +9,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"syscall"
 
 	"github.com/docker/docker/pkg/archive"
@@ -20,8 +21,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
-
-
 
 //go:embed "rootfs.tar.gz"
 var rootfs []byte
@@ -115,7 +114,7 @@ func main() {
 	}
 
 	logrus.Infof("Executing...\n")
-	factory, err := libcontainer.New(stateTmp, libcontainer.Cgroupfs, libcontainer.InitArgs(os.Args[0], "init"))
+	factory, err := libcontainer.New(stateTmp, libcontainer.RootlessCgroupfs, libcontainer.InitArgs(os.Args[0], "init"))
 	if err != nil {
 		logrus.Error(err)
 		return
@@ -136,17 +135,11 @@ func main() {
 
 	logrus.Infof("Current user: %+v\n", u)
 
-	var loadedConfig configs.Config
-	if err := json.Unmarshal(configjson, &loadedConfig); err != nil {
-		logrus.Error(err)
-		return
-	}
-
 	var processConfig struct {
 		Process struct {
 			Args []string
-			Env []string
-			Cwd string
+			Env  []string
+			Cwd  string
 		}
 	}
 	if err := json.Unmarshal(configjson, &processConfig); err != nil {
@@ -154,8 +147,12 @@ func main() {
 		return
 	}
 
+	uid, _ := strconv.Atoi(u.Uid)
+	gid, _ := strconv.Atoi(u.Gid)
 	config := &configs.Config{
-		Rootfs: rootFsTmp,
+		RootlessEUID:    uid != 0,
+		RootlessCgroups: uid != 0,
+		Rootfs:          rootFsTmp,
 		Capabilities: &configs.Capabilities{
 			Bounding: []string{
 				"CAP_CHOWN",
@@ -286,7 +283,7 @@ func main() {
 				Destination: "/dev/pts",
 				Device:      "devpts",
 				Flags:       unix.MS_NOSUID | unix.MS_NOEXEC,
-				Data:        "newinstance,ptmxmode=0666,mode=0620,gid=5",
+				Data:        "newinstance,ptmxmode=0666,mode=0620",
 			},
 			{
 				Device:      "tmpfs",
@@ -296,21 +293,6 @@ func main() {
 				Flags:       defaultMountFlags,
 			},
 		},
-		UidMappings: []configs.IDMap{
-			{
-				ContainerID: 0,
-				HostID:      0,
-				Size:        65536,
-			},
-		},
-		GidMappings: []configs.IDMap{
-			{
-				ContainerID: 0,
-				HostID:      0,
-				Size:        65536,
-			},
-		},
-
 		Rlimits: []configs.Rlimit{
 			{
 				Type: unix.RLIMIT_NOFILE,
@@ -320,9 +302,45 @@ func main() {
 		},
 	}
 
+	if uid == 0 {
+		config.UidMappings = []configs.IDMap{
+			{
+				ContainerID: 0,
+				HostID:      0,
+				Size:        65536,
+			},
+		}
+		config.GidMappings= []configs.IDMap{
+			{
+				ContainerID: 0,
+				HostID:      0,
+				Size:        65536,
+			},
+		}
+	} else {
+		config.UidMappings = []configs.IDMap{
+			{
+				ContainerID: 0,
+				HostID:      uid,
+				Size:        1,
+			},
+		}
+		config.GidMappings= []configs.IDMap{
+			{
+				ContainerID: 0,
+				HostID:      gid,
+				Size:        1,
+			},
+		}
+	}
+
 	//TODO: Random ID
 	container, err := factory.Create("ctrwrap", config)
-	defer container.Destroy()
+	defer func() {
+		if container != nil {
+			container.Destroy()
+		}
+	}()
 
 	if err != nil {
 		logrus.Error(err)
@@ -330,14 +348,13 @@ func main() {
 	}
 
 	args := append(processConfig.Process.Args, os.Args[1:]...)
-	//args := []string{"/bin/bash"}
 	logrus.Infof("Args: %v\n", args)
 
 	process := &libcontainer.Process{
 		Args:   args,
 		Env:    append(processConfig.Process.Env, os.Environ()...),
-		Cwd: processConfig.Process.Cwd,
-		User:   u.Uid,
+		Cwd:    processConfig.Process.Cwd,
+		User:   "0",
 		Stdin:  os.Stdin,
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
