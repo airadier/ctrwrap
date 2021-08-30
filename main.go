@@ -9,7 +9,6 @@ import (
 	"os/user"
 	"path/filepath"
 	"runtime"
-	"syscall"
 
 	"github.com/docker/docker/pkg/archive"
 	"github.com/opencontainers/runc/libcontainer"
@@ -20,8 +19,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
-
-
 
 //go:embed "rootfs.tar.gz"
 var rootfs []byte
@@ -51,7 +48,6 @@ func init() {
 func main() {
 
 	logrus.Infof("Extracting...\n")
-	dockerSockPath := filepath.Join(rootFsTmp, "var", "run", "docker.sock")
 
 	// Make the rootfs directory.
 	if err := os.MkdirAll(rootFsTmp, 0755); err != nil {
@@ -60,16 +56,6 @@ func main() {
 	}
 
 	defer func() {
-		logrus.Infof("Unmounting %s...\n", dockerSockPath)
-		if err := syscall.Unmount(dockerSockPath, 0); err != nil {
-			logrus.Error(err)
-		}
-
-		logrus.Infof("Unmounting /host...\n")
-		if err := syscall.Unmount("/host", 0); err != nil {
-			logrus.Error(err)
-		}
-
 		logrus.Infof("Removing extracted files...\n")
 		// Remove the rootfs after the container has exited.
 		if err := os.RemoveAll(rootFsTmp); err != nil {
@@ -97,23 +83,6 @@ func main() {
 		return
 	}
 
-	logrus.Infof("Mounting /var/run/docker.sock at %s...\n", dockerSockPath)
-	if file, err := os.Create(dockerSockPath); err == nil {
-		file.Close()
-	}
-	if err := syscall.Mount("/var/run/docker.sock", dockerSockPath, "none", syscall.MS_BIND, ""); err != nil {
-		logrus.Error(err)
-	}
-
-	logrus.Infof("Mounting host filesystem at /host...\n")
-	// Make the rootfs directory.
-	if err := os.MkdirAll("/host", 0755); err != nil {
-		logrus.Error(err)
-	}
-	if err := syscall.Mount("/", "/host", "none", syscall.MS_BIND, ""); err != nil {
-		logrus.Error(err)
-	}
-
 	logrus.Infof("Executing...\n")
 	factory, err := libcontainer.New(stateTmp, libcontainer.Cgroupfs, libcontainer.InitArgs(os.Args[0], "init"))
 	if err != nil {
@@ -136,17 +105,11 @@ func main() {
 
 	logrus.Infof("Current user: %+v\n", u)
 
-	var loadedConfig configs.Config
-	if err := json.Unmarshal(configjson, &loadedConfig); err != nil {
-		logrus.Error(err)
-		return
-	}
-
 	var processConfig struct {
 		Process struct {
 			Args []string
-			Env []string
-			Cwd string
+			Env  []string
+			Cwd  string
 		}
 	}
 	if err := json.Unmarshal(configjson, &processConfig); err != nil {
@@ -269,6 +232,18 @@ func main() {
 		Hostname: "ctrwrap",
 		Mounts: []*configs.Mount{
 			{
+				Source:      "/var/run/docker.sock",
+				Destination: "/var/run/docker.sock",
+				Device:      "bind",
+				Flags:       unix.MS_BIND | unix.MS_REC,
+			},
+			{
+				Source:      "/",
+				Destination: "/host",
+				Device:      "bind",
+				Flags:       unix.MS_BIND | unix.MS_REC,
+			},
+			{
 				Source:      "proc",
 				Destination: "/proc",
 				Device:      "proc",
@@ -322,7 +297,11 @@ func main() {
 
 	//TODO: Random ID
 	container, err := factory.Create("ctrwrap", config)
-	defer container.Destroy()
+	defer func() {
+		if container != nil {
+			container.Destroy()
+		}
+	}()
 
 	if err != nil {
 		logrus.Error(err)
@@ -330,13 +309,12 @@ func main() {
 	}
 
 	args := append(processConfig.Process.Args, os.Args[1:]...)
-	//args := []string{"/bin/bash"}
 	logrus.Infof("Args: %v\n", args)
 
 	process := &libcontainer.Process{
 		Args:   args,
 		Env:    append(processConfig.Process.Env, os.Environ()...),
-		Cwd: processConfig.Process.Cwd,
+		Cwd:    processConfig.Process.Cwd,
 		User:   u.Uid,
 		Stdin:  os.Stdin,
 		Stdout: os.Stdout,
@@ -356,6 +334,4 @@ func main() {
 		logrus.Error(err)
 		return
 	}
-
-	logrus.Infof("Exit without err\n")
 }
