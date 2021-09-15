@@ -120,6 +120,52 @@ func main() {
 		return
 	}
 
+	mounts := []*configs.Mount{
+
+		{
+			Source:      "/",
+			Destination: "/host",
+			Device:      "bind",
+			Flags:       unix.MS_BIND | unix.MS_REC,
+		},
+		{
+			Source:      "proc",
+			Destination: "/proc",
+			Device:      "proc",
+			Flags:       defaultMountFlags,
+		},
+		{
+			Source:      "tmpfs",
+			Destination: "/dev",
+			Device:      "tmpfs",
+			Flags:       unix.MS_NOSUID | unix.MS_STRICTATIME,
+			Data:        "mode=755",
+		},
+		{
+			Source:      "devpts",
+			Destination: "/dev/pts",
+			Device:      "devpts",
+			Flags:       unix.MS_NOSUID | unix.MS_NOEXEC,
+			Data:        "newinstance,ptmxmode=0666,mode=0620,gid=5",
+		},
+		{
+			Device:      "tmpfs",
+			Source:      "shm",
+			Destination: "/dev/shm",
+			Data:        "mode=1777,size=65536k",
+			Flags:       defaultMountFlags,
+		},
+	}
+
+	if _, err := os.Stat("/var/run/docker.sock"); err == nil {
+		mounts = append(mounts, &configs.Mount{
+			Source:      "/var/run/docker.sock",
+			Destination: "/var/run/docker.sock",
+			Device:      "bind",
+			Flags:       unix.MS_BIND | unix.MS_REC,
+		})
+	}
+
 	config := &configs.Config{
 		Rootfs: rootFsTmp,
 		Capabilities: &configs.Capabilities{
@@ -233,47 +279,7 @@ func main() {
 		},
 		Devices:  specconv.AllowedDevices,
 		Hostname: "ctrwrap",
-		Mounts: []*configs.Mount{
-			{
-				Source:      "/var/run/docker.sock",
-				Destination: "/var/run/docker.sock",
-				Device:      "bind",
-				Flags:       unix.MS_BIND | unix.MS_REC,
-			},
-			{
-				Source:      "/",
-				Destination: "/host",
-				Device:      "bind",
-				Flags:       unix.MS_BIND | unix.MS_REC,
-			},
-			{
-				Source:      "proc",
-				Destination: "/proc",
-				Device:      "proc",
-				Flags:       defaultMountFlags,
-			},
-			{
-				Source:      "tmpfs",
-				Destination: "/dev",
-				Device:      "tmpfs",
-				Flags:       unix.MS_NOSUID | unix.MS_STRICTATIME,
-				Data:        "mode=755",
-			},
-			{
-				Source:      "devpts",
-				Destination: "/dev/pts",
-				Device:      "devpts",
-				Flags:       unix.MS_NOSUID | unix.MS_NOEXEC,
-				Data:        "newinstance,ptmxmode=0666,mode=0620,gid=5",
-			},
-			{
-				Device:      "tmpfs",
-				Source:      "shm",
-				Destination: "/dev/shm",
-				Data:        "mode=1777,size=65536k",
-				Flags:       defaultMountFlags,
-			},
-		},
+		Mounts:   mounts,
 		UidMappings: []configs.IDMap{
 			{
 				ContainerID: 0,
