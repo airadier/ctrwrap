@@ -322,7 +322,7 @@ func main() {
 
 	process := &libcontainer.Process{
 		Args:   args,
-		Env:    append(processConfig.Process.Env, os.Environ()...),
+		Env:    append(os.Environ(), processConfig.Process.Env...),
 		Cwd:    processConfig.Process.Cwd,
 		User:   u.Uid,
 		Stdin:  os.Stdin,
