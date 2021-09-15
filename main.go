@@ -28,12 +28,6 @@ var rootfs []byte
 //go:embed "config.json"
 var configjson []byte
 
-//TODO: Rootless
-
-//TODO: Random tmp folder
-const rootFsTmp = "/tmp/rootfs"
-const stateTmp = "/tmp/container"
-
 func init() {
 	if len(os.Args) > 1 && os.Args[1] == "init" {
 		runtime.GOMAXPROCS(1)
@@ -48,19 +42,28 @@ func init() {
 
 func main() {
 
-	logrus.Infof("Extracting...\n")
+	rootFsTmp, err := ioutil.TempDir("", "rootfs")
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
 
-	// Make the rootfs directory.
-	if err := os.MkdirAll(rootFsTmp, 0755); err != nil {
+	logrus.Infof("Extracting to %s...", rootFsTmp)
+
+	stateTmp, err := ioutil.TempDir("", "containerstate")
+	if err != nil {
 		logrus.Error(err)
 		return
 	}
 
 	defer func() {
-		logrus.Infof("Removing extracted files...\n")
+		logrus.Infof("Removing extracted files from %s...", rootFsTmp)
 		// Remove the rootfs after the container has exited.
 		if err := os.RemoveAll(rootFsTmp); err != nil {
 			logrus.Warnf("removing rootfs failed: %v", err)
+		}
+		if err := os.RemoveAll(stateTmp); err != nil {
+			logrus.Warnf("removing container state failed: %v", err)
 		}
 	}()
 
@@ -71,7 +74,7 @@ func main() {
 		return
 	}
 
-	logrus.Infof("Copying resolv.conf...\n")
+	logrus.Infof("Copying resolv.conf...")
 	resolvConf, err := ioutil.ReadFile("/etc/resolv.conf")
 	if err != nil {
 		logrus.Error(err)
@@ -84,7 +87,7 @@ func main() {
 		return
 	}
 
-	logrus.Infof("Executing...\n")
+	logrus.Infof("Executing...")
 	factory, err := libcontainer.New(stateTmp, libcontainer.RootlessCgroupfs, libcontainer.InitArgs(os.Args[0], "init"))
 	if err != nil {
 		logrus.Error(err)
@@ -332,7 +335,7 @@ func main() {
 	}
 
 	args := append(processConfig.Process.Args, os.Args[1:]...)
-	logrus.Infof("Args: %v\n", args)
+	logrus.Infof("Args: %v", args)
 
 	process := &libcontainer.Process{
 		Args:   args,

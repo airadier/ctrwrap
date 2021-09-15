@@ -12,7 +12,7 @@ make
 
 Root filesytem can be created with:
 ```
-docker export (docker create secure-inline-scan:2) -o rootfs.tar
+docker export (docker create quay.io/sysdig/secure-inline-scan:2) -o rootfs.tar
 ```
 and then compressed with gzip
 

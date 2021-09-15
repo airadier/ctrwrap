@@ -7,7 +7,9 @@ rootfs.tar.gz: rootfs.tar
 	gzip -f -k rootfs.tar
 
 rootfs.tar:
-	docker export $(shell docker create quay.io/sysdig/secure-inline-scan:2) -o rootfs.tar
+	$(eval CONTAINER_ID := $(shell docker create quay.io/sysdig/secure-inline-scan:2))
+	docker export $(CONTAINER_ID) -o rootfs.tar
+	docker rm $(CONTAINER_ID)
 	mkdir rootfs
 	tar -C rootfs -xvf rootfs.tar
 	chmod -R u+rw rootfs/*
@@ -23,4 +25,4 @@ build: rootfs.tar.gz main.go
 #	docker run --rm -v $(shell pwd):/go/src/app -w /go/src/app golang:1.17-stretch sh -c "objdump -T ctrwrap | grep GLIBC_"
 
 build-local: main.go
-	CGO_ENABLED=$(CGO_ENABLED)  go build ${GO_LDFLAGS_STATIC} -o ctrwrap main.go
+	CGO_ENABLED=$(CGO_ENABLED) go build ${GO_LDFLAGS_STATIC} -o ctrwrap main.go
