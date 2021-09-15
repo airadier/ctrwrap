@@ -121,7 +121,6 @@ func main() {
 		return
 	}
 
-
 	config := &configs.Config{
 		RootlessEUID:    uid != 0,
 		RootlessCgroups: true,
@@ -239,16 +238,16 @@ func main() {
 		Hostname: "ctrwrap",
 		Mounts: []*configs.Mount{
 			{
-				Source: "/var/run/docker.sock",
+				Source:      "/var/run/docker.sock",
 				Destination: "/var/run/docker.sock",
-				Device: "bind",
-				Flags: unix.MS_BIND | unix.MS_REC,
+				Device:      "bind",
+				Flags:       unix.MS_BIND | unix.MS_REC,
 			},
 			{
-				Source: "/",
+				Source:      "/",
 				Destination: "/host",
-				Device: "bind",
-				Flags: unix.MS_BIND | unix.MS_REC,
+				Device:      "bind",
+				Flags:       unix.MS_BIND | unix.MS_REC,
 			},
 			{
 				Source:      "proc",
@@ -295,7 +294,7 @@ func main() {
 				Size:        65536,
 			},
 		}
-		config.GidMappings= []configs.IDMap{
+		config.GidMappings = []configs.IDMap{
 			{
 				ContainerID: 0,
 				HostID:      0,
@@ -310,7 +309,7 @@ func main() {
 				Size:        1,
 			},
 		}
-		config.GidMappings= []configs.IDMap{
+		config.GidMappings = []configs.IDMap{
 			{
 				ContainerID: 0,
 				HostID:      gid,
@@ -358,5 +357,4 @@ func main() {
 		logrus.Error(err)
 		return
 	}
-
 }
