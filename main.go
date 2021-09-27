@@ -256,7 +256,6 @@ func main() {
 			{Type: configs.NEWIPC},
 			{Type: configs.NEWPID},
 			{Type: configs.NEWUSER},
-			{Type: configs.NEWCGROUP},
 		}),
 		Cgroups: &configs.Cgroup{
 			Name:   "ctrwrap",
