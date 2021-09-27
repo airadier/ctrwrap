@@ -255,7 +255,6 @@ func main() {
 			{Type: configs.NEWUTS},
 			{Type: configs.NEWIPC},
 			{Type: configs.NEWPID},
-			{Type: configs.NEWUSER},
 		}),
 		Cgroups: &configs.Cgroup{
 			Name:   "ctrwrap",
@@ -279,21 +278,6 @@ func main() {
 		Devices:  specconv.AllowedDevices,
 		Hostname: "ctrwrap",
 		Mounts:   mounts,
-		UidMappings: []configs.IDMap{
-			{
-				ContainerID: 0,
-				HostID:      0,
-				Size:        65536,
-			},
-		},
-		GidMappings: []configs.IDMap{
-			{
-				ContainerID: 0,
-				HostID:      0,
-				Size:        65536,
-			},
-		},
-
 		Rlimits: []configs.Rlimit{
 			{
 				Type: unix.RLIMIT_NOFILE,
