@@ -172,7 +172,7 @@ func main() {
 
 	config := &configs.Config{
 		RootlessEUID:    uid != 0,
-		RootlessCgroups: true,
+		RootlessCgroups: uid != 0,
 		Rootfs:          rootFsTmp,
 		Capabilities: &configs.Capabilities{
 			Bounding: []string{
@@ -261,7 +261,6 @@ func main() {
 			{Type: configs.NEWUTS},
 			{Type: configs.NEWIPC},
 			{Type: configs.NEWPID},
-			{Type: configs.NEWUSER},
 		}),
 		Cgroups: &configs.Cgroup{
 			Name:   "ctrwrap",
@@ -294,22 +293,7 @@ func main() {
 		},
 	}
 
-	if uid == 0 {
-		config.UidMappings = []configs.IDMap{
-			{
-				ContainerID: 0,
-				HostID:      0,
-				Size:        65536,
-			},
-		}
-		config.GidMappings = []configs.IDMap{
-			{
-				ContainerID: 0,
-				HostID:      0,
-				Size:        65536,
-			},
-		}
-	} else {
+	if uid != 0 {
 		config.UidMappings = []configs.IDMap{
 			{
 				ContainerID: 0,
@@ -324,6 +308,7 @@ func main() {
 				Size:        1,
 			},
 		}
+		config.Namespaces = append(config.Namespaces, configs.Namespace{Type: configs.NEWUSER})
 	}
 
 	//TODO: Random ID
